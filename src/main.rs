@@ -7,7 +7,7 @@ use std::{
     io::{BufReader, Read},
 };
 
-const CHUNK_SIZE: usize = 2_usize.pow(30); // 2^30 * 4 bytes = 4 GiB
+const CHUNK_SIZE: usize = 4 * 2_usize.pow(30); // 4 * 2^30 * 4 bytes = 16 GiB
 
 fn main() -> Result<()> {
     let env = Env::default().filter_or("RUST_LOG", "info");
