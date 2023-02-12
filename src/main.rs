@@ -36,6 +36,30 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn read_chunk(integers: &mut Integers, buffer: &mut Vec<u32>) -> usize {
+    info!("Reading chunk");
+
+    let chunk = integers.take(CHUNK_SIZE);
+    buffer.extend(chunk);
+
+    buffer.len()
+}
+
+fn write_chunk(buffer: &[u32], file_name: impl AsRef<Path>) -> Result<()> {
+    let mut writer = BufWriter::new(File::create(file_name)?);
+    let mut previous = None;
+
+    for &number in buffer {
+        if previous.map(|previous| number != previous).unwrap_or(true) {
+            writer.write_all(&number.to_le_bytes())?;
+        }
+
+        previous = Some(number);
+    }
+
+    Ok(())
+}
+
 /// An iterator that reads a bunch of `u32` from a file of little endian bytes.
 struct Integers {
     reader: BufReader<File>,
@@ -60,28 +84,4 @@ impl Iterator for Integers {
             .ok()
             .map(|_| u32::from_le_bytes(self.buffer))
     }
-}
-
-fn read_chunk(integers: &mut Integers, buffer: &mut Vec<u32>) -> usize {
-    info!("Reading chunk");
-
-    let chunk = integers.take(CHUNK_SIZE);
-    buffer.extend(chunk);
-
-    buffer.len()
-}
-
-fn write_chunk(buffer: &[u32], file_name: impl AsRef<Path>) -> Result<()> {
-    let mut writer = BufWriter::new(File::create(file_name)?);
-    let mut previous = None;
-
-    for &number in buffer {
-        if previous.map(|previous| number != previous).unwrap_or(true) {
-            writer.write_all(&number.to_le_bytes())?;
-        }
-
-        previous = Some(number);
-    }
-
-    Ok(())
 }
