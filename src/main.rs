@@ -36,9 +36,7 @@ fn read_chunk(reader: &mut impl Read, buffer: &mut Vec<u32>) -> usize {
     info!("Reading chunk");
 
     let mut num_buffer = [0; 4];
-    while buffer.len() < CHUNK_SIZE
-        && reader.read_exact(&mut num_buffer).is_ok()
-    {
+    while buffer.len() < CHUNK_SIZE && reader.read_exact(&mut num_buffer).is_ok() {
         let number = u32::from_le_bytes(num_buffer);
         buffer.push(number);
     }
