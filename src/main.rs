@@ -14,11 +14,11 @@ fn main() -> Result<()> {
     let env = Env::default().filter_or("RUST_LOG", "info");
     env_logger::init_from_env(env);
 
-    let mut reader = BufReader::new(File::open("1.bin")?);
+    let mut integers = Integers::new(File::open("1.bin")?);
     let mut buffer = Vec::<u32>::with_capacity(CHUNK_SIZE);
     let mut chunks = Vec::new();
 
-    while read_chunk(&mut reader, &mut buffer) > 0 {
+    while read_chunk(&mut integers, &mut buffer) > 0 {
         let chunk_name = format!("1_{}.bin", chunks.len());
 
         info!("Sorting chunk");
@@ -62,14 +62,11 @@ impl Iterator for Integers {
     }
 }
 
-fn read_chunk(reader: &mut impl Read, buffer: &mut Vec<u32>) -> usize {
+fn read_chunk(integers: &mut Integers, buffer: &mut Vec<u32>) -> usize {
     info!("Reading chunk");
 
-    let mut num_buffer = [0; 4];
-    while buffer.len() < CHUNK_SIZE && reader.read_exact(&mut num_buffer).is_ok() {
-        let number = u32::from_le_bytes(num_buffer);
-        buffer.push(number);
-    }
+    let chunk = integers.take(CHUNK_SIZE);
+    buffer.extend(chunk);
 
     buffer.len()
 }
