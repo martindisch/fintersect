@@ -3,7 +3,7 @@ use eyre::Result;
 use log::info;
 use rayon::slice::ParallelSliceMut;
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{BufReader, BufWriter, Read, Write},
     iter::Peekable,
     path::Path,
@@ -36,6 +36,11 @@ fn main() -> Result<()> {
 
     info!("Merging chunks");
     merge_distinct(&chunks, "1_distinct_sorted.bin")?;
+
+    info!("Deleting chunks");
+    for chunk in &chunks {
+        fs::remove_file(chunk)?;
+    }
 
     info!("Done");
 
