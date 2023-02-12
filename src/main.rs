@@ -5,6 +5,7 @@ use rayon::slice::ParallelSliceMut;
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
+    iter::Peekable,
     path::Path,
 };
 
@@ -31,6 +32,9 @@ fn main() -> Result<()> {
         buffer.clear();
     }
 
+    info!("Merging chunks");
+    merge_distinct(&chunks, "1_distinct_sorted.bin")?;
+
     info!("Done");
 
     Ok(())
@@ -55,6 +59,47 @@ fn write_chunk(buffer: &[u32], file_name: impl AsRef<Path>) -> Result<()> {
         }
 
         previous = Some(number);
+    }
+
+    Ok(())
+}
+
+fn merge_distinct(inputs: &[impl AsRef<Path>], output: impl AsRef<Path>) -> Result<()> {
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut readers = inputs
+        .iter()
+        .map(|file_name| Integers::new(File::open(file_name).unwrap()).peekable())
+        .collect::<Vec<Peekable<Integers>>>();
+    let mut last_write: Option<u32> = None;
+
+    // Determine the next number to write by going through all reader iterators and...
+    while let Some(&next_write) = readers
+        .iter_mut()
+        .filter_map(|reader| {
+            // ...as long as the next number of the iterator is one we've already written...
+            while last_write
+                .map(|last_written| {
+                    if let Some(&next) = reader.peek() {
+                        next <= last_written
+                    } else {
+                        false
+                    }
+                })
+                .unwrap_or(false)
+            {
+                // ...advance the iterator and check again...
+                reader.next();
+            }
+
+            // ...then finally once we have a new number (or have reached the iterator's end),
+            // return what's next...
+            reader.peek()
+        })
+        // ...and the next number to write is then the smallest of the ones we haven't written yet.
+        .min()
+    {
+        writer.write_all(&next_write.to_le_bytes())?;
+        last_write = Some(next_write);
     }
 
     Ok(())
