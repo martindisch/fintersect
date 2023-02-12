@@ -36,6 +36,32 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// An iterator that reads a bunch of `u32` from a file of little endian bytes.
+struct Integers {
+    reader: BufReader<File>,
+    buffer: [u8; 4],
+}
+
+impl Integers {
+    fn new(file: File) -> Self {
+        Self {
+            reader: BufReader::new(file),
+            buffer: [0; 4],
+        }
+    }
+}
+
+impl Iterator for Integers {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<u32> {
+        self.reader
+            .read_exact(&mut self.buffer)
+            .ok()
+            .map(|_| u32::from_le_bytes(self.buffer))
+    }
+}
+
 fn read_chunk(reader: &mut impl Read, buffer: &mut Vec<u32>) -> usize {
     info!("Reading chunk");
 
