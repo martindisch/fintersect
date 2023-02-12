@@ -32,6 +32,8 @@ fn main() -> Result<()> {
         buffer.clear();
     }
 
+    drop(buffer);
+
     info!("Merging chunks");
     merge_distinct(&chunks, "1_distinct_sorted.bin")?;
 
