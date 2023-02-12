@@ -5,6 +5,7 @@ applies to:
 - env_logger
 - eyre
 - log, Copyright (c) 2014 The Rust Project Developers
+- rayon, Copyright (c) 2010 The Rust Project Developers
 -------------------------------------------------------------------------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,7 @@ applies to:
 - env_logger
 - eyre
 - log
+- rayon
 -------------------------------------------------------------------------------
                                  Apache License
                            Version 2.0, January 2004

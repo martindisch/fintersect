@@ -1,6 +1,7 @@
 use env_logger::Env;
 use eyre::Result;
 use log::info;
+use rayon::slice::ParallelSliceMut;
 use std::{
     fs::File,
     io::{BufReader, Read},
@@ -29,7 +30,7 @@ fn main() -> Result<()> {
 
     info!("Sorting chunk");
 
-    chunk_buffer.sort_unstable();
+    chunk_buffer.par_sort_unstable();
 
     info!("Done");
 
