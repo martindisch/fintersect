@@ -47,8 +47,14 @@ fn read_chunk(reader: &mut impl Read, buffer: &mut Vec<u32>) -> usize {
 }
 
 fn write_chunk(writer: &mut impl Write, buffer: &[u32]) -> Result<()> {
-    for number in buffer {
-        writer.write_all(&number.to_le_bytes())?;
+    let mut previous = None;
+
+    for &number in buffer {
+        if previous.map(|previous| number != previous).unwrap_or(true) {
+            writer.write_all(&number.to_le_bytes())?;
+        }
+
+        previous = Some(number);
     }
 
     Ok(())
