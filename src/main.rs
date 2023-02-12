@@ -4,7 +4,7 @@ use log::info;
 use rayon::slice::ParallelSliceMut;
 use std::{
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, BufWriter, Read, Write},
 };
 
 const CHUNK_SIZE: usize = 4 * 2_usize.pow(30); // 4 * 2^30 * 4 bytes = 16 GiB
@@ -15,10 +15,15 @@ fn main() -> Result<()> {
 
     let mut reader = BufReader::new(File::open("1.bin")?);
     let mut buffer = Vec::<u32>::with_capacity(CHUNK_SIZE);
+    let mut writer = BufWriter::new(File::create("1_sorted.bin")?);
 
     while read_chunk(&mut reader, &mut buffer) > 0 {
         info!("Sorting chunk");
         buffer.par_sort_unstable();
+
+        info!("Writing chunk");
+        write_chunk(&mut writer, &buffer)?;
+
         buffer.clear();
     }
 
@@ -39,4 +44,12 @@ fn read_chunk(reader: &mut impl Read, buffer: &mut Vec<u32>) -> usize {
     }
 
     buffer.len()
+}
+
+fn write_chunk(writer: &mut impl Write, buffer: &[u32]) -> Result<()> {
+    for number in buffer {
+        writer.write_all(&number.to_le_bytes())?;
+    }
+
+    Ok(())
 }
