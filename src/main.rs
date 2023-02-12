@@ -19,13 +19,11 @@ fn main() -> Result<()> {
 
     info!("Reading chunk");
 
-    for _ in 0..CHUNK_SIZE {
-        if reader.read_exact(&mut num_buffer).is_ok() {
-            let number = u32::from_le_bytes(num_buffer);
-            chunk_buffer.push(number);
-        } else {
-            break;
-        }
+    while chunk_buffer.len() < CHUNK_SIZE
+        && reader.read_exact(&mut num_buffer).is_ok()
+    {
+        let number = u32::from_le_bytes(num_buffer);
+        chunk_buffer.push(number);
     }
 
     info!("Sorting chunk");
