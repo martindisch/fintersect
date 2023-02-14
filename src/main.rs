@@ -15,12 +15,23 @@ fn main() -> Result<()> {
     let env = Env::default().filter_or("RUST_LOG", "info");
     env_logger::init_from_env(env);
 
-    let mut integers = Integers::new(File::open("1.bin")?);
+    external_sort_distinct("1.bin", "1_sorted_distinct.bin")?;
+    external_sort_distinct("2.bin", "2_sorted_distinct.bin")?;
+
+    info!("Done");
+
+    Ok(())
+}
+
+fn external_sort_distinct(in_file: &str, out_file: &str) -> Result<()> {
+    info!("Starting external sort of {in_file}");
+
     let mut buffer = Vec::<u32>::with_capacity(CHUNK_SIZE);
+    let mut integers = Integers::new(File::open(in_file)?);
     let mut chunks = Vec::new();
 
     while read_chunk(&mut integers, &mut buffer) > 0 {
-        let chunk_name = format!("1_{}.bin", chunks.len());
+        let chunk_name = format!("{}_{in_file}", chunks.len());
 
         info!("Sorting chunk");
         buffer.par_sort_unstable();
@@ -35,14 +46,12 @@ fn main() -> Result<()> {
     drop(buffer);
 
     info!("Merging chunks");
-    merge_distinct(&chunks, "1_distinct_sorted.bin")?;
+    merge_distinct(&chunks, out_file)?;
 
     info!("Deleting chunks");
     for chunk in &chunks {
         fs::remove_file(chunk)?;
     }
-
-    info!("Done");
 
     Ok(())
 }
