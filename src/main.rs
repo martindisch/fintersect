@@ -32,24 +32,20 @@ fn main() -> Result<()> {
 fn external_sort_distinct(in_file: &str, out_file: &str) -> Result<()> {
     info!("Starting external sort of {in_file}");
 
-    let mut buffer = Vec::<u32>::with_capacity(CHUNK_SIZE);
     let mut integers = Integers::new(File::open(in_file)?);
     let mut chunks = Vec::new();
 
-    while read_chunk(&mut integers, &mut buffer) > 0 {
+    while let Some(mut chunk) = read_chunk(&mut integers) {
         let chunk_name = format!("{}_{in_file}", chunks.len());
 
         info!("Sorting chunk");
-        buffer.par_sort_unstable();
+        chunk.par_sort_unstable();
 
         info!("Writing chunk {chunk_name}");
-        write_chunk(&buffer, &chunk_name)?;
+        write_chunk(&chunk, &chunk_name)?;
 
         chunks.push(chunk_name);
-        buffer.clear();
     }
-
-    drop(buffer);
 
     info!("Merging chunks");
     merge_distinct(&chunks, out_file)?;
@@ -62,13 +58,18 @@ fn external_sort_distinct(in_file: &str, out_file: &str) -> Result<()> {
     Ok(())
 }
 
-fn read_chunk(integers: &mut Integers, buffer: &mut Vec<u32>) -> usize {
+fn read_chunk(integers: &mut Integers) -> Option<Vec<u32>> {
     info!("Reading chunk");
 
+    let mut buffer = Vec::<u32>::with_capacity(CHUNK_SIZE);
     let chunk = integers.take(CHUNK_SIZE);
     buffer.extend(chunk);
 
-    buffer.len()
+    if buffer.is_empty() {
+        None
+    } else {
+        Some(buffer)
+    }
 }
 
 fn write_chunk(buffer: &[u32], file_name: impl AsRef<Path>) -> Result<()> {
