@@ -9,7 +9,8 @@ use std::{
     path::Path,
 };
 
-const CHUNK_SIZE: usize = 4 * 2_usize.pow(30); // 4 * 2^30 * 4 bytes = 16 GiB
+/// Chunk size in elements (32 bit integers). This is 16 GiB, tune to available memory.
+const CHUNK_SIZE: usize = 16 / 4 * 2_usize.pow(30);
 
 fn main() -> Result<()> {
     let env = Env::default().filter_or("RUST_LOG", "info");
@@ -159,7 +160,7 @@ fn merge_shared(
     Ok(())
 }
 
-/// An iterator that reads a bunch of `u32` from a file of little endian bytes.
+/// An iterator that reads a bunch of `u32` from a file of little-endian bytes.
 struct Integers {
     reader: BufReader<File>,
     buffer: [u8; 4],
