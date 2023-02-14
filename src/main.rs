@@ -33,10 +33,10 @@ fn external_sort_distinct(in_file: &str, out_file: &str) -> Result<()> {
     info!("Starting external sort of {in_file}");
 
     let mut integers = Integers::new(File::open(in_file)?);
-    let mut chunks = Vec::new();
+    let mut chunk_names = Vec::new();
 
     while let Some(mut chunk) = read_chunk(&mut integers) {
-        let chunk_name = format!("{}_{in_file}", chunks.len());
+        let chunk_name = format!("{}_{in_file}", chunk_names.len());
 
         info!("Sorting chunk");
         chunk.par_sort_unstable();
@@ -44,14 +44,14 @@ fn external_sort_distinct(in_file: &str, out_file: &str) -> Result<()> {
         info!("Writing chunk {chunk_name}");
         write_chunk(&chunk, &chunk_name)?;
 
-        chunks.push(chunk_name);
+        chunk_names.push(chunk_name);
     }
 
     info!("Merging chunks");
-    merge_distinct(&chunks, out_file)?;
+    merge_distinct(&chunk_names, out_file)?;
 
     info!("Deleting chunks");
-    for chunk in &chunks {
+    for chunk in &chunk_names {
         fs::remove_file(chunk)?;
     }
 
