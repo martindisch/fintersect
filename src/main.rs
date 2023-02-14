@@ -18,6 +18,12 @@ fn main() -> Result<()> {
     external_sort_distinct("1.bin", "1_sorted_distinct.bin")?;
     external_sort_distinct("2.bin", "2_sorted_distinct.bin")?;
 
+    merge_shared(
+        "1_sorted_distinct.bin",
+        "1_sorted_distinct.bin",
+        "result.bin",
+    )?;
+
     info!("Done");
 
     Ok(())
@@ -116,6 +122,37 @@ fn merge_distinct(inputs: &[impl AsRef<Path>], output: impl AsRef<Path>) -> Resu
     {
         writer.write_all(&next_write.to_le_bytes())?;
         last_write = Some(next_write);
+    }
+
+    Ok(())
+}
+
+fn merge_shared(
+    input_1: impl AsRef<Path>,
+    input_2: impl AsRef<Path>,
+    output: impl AsRef<Path>,
+) -> Result<()> {
+    info!("Combining files into set of shared values");
+
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut first = Integers::new(File::open(input_1)?).peekable();
+    let mut second = Integers::new(File::open(input_2)?).peekable();
+
+    loop {
+        match (first.peek(), second.peek()) {
+            (Some(next_1), Some(next_2)) if next_1 == next_2 => {
+                writer.write_all(&next_1.to_le_bytes())?;
+                first.next();
+                second.next();
+            }
+            (Some(next_1), Some(next_2)) if next_1 > next_2 => {
+                second.next();
+            }
+            (Some(next_1), Some(next_2)) if next_1 < next_2 => {
+                first.next();
+            }
+            _ => break,
+        }
     }
 
     Ok(())
