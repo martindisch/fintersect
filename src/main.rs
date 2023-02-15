@@ -21,7 +21,7 @@ fn main() -> Result<()> {
 
     merge_shared(
         "1_sorted_distinct.bin",
-        "1_sorted_distinct.bin",
+        "2_sorted_distinct.bin",
         "result.bin",
     )?;
 
